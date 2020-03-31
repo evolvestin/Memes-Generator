@@ -307,7 +307,7 @@ def posting(link, true_stamp):
     return post
 
 
-def goodies(stamp):
+def goodies(stamp, number):
     global main1
     goodies_raw = []
     empty_channels = ''
@@ -390,12 +390,12 @@ def goodies(stamp):
         print('-------------------------------')
     goodies_raw.sort(key=lambda arr: arr['median'])
     good_posting = list(reversed(goodies_raw))
-    if len(good_posting) <= 5:
+    if len(good_posting) <= number:
         for i in good_posting:
             print(i)
             post_media(i, idChannelFilter, likes(white_like, 0, 0))
     else:
-        for i in range(0, 5):
+        for i in range(0, number):
             print(good_posting[i])
             post_media(good_posting[i], idChannelFilter, likes(white_like, 0, 0))
     if len(empty_channels) > 0:
@@ -465,10 +465,12 @@ def repeat_all_messages(message):
                 post = posting(message.text, int(datetime.now().timestamp()))
                 post_media(post, idChannelFilter, likes(white_like, 0, 0))
             elif message.text.startswith('/mem'):
-                search = re.search('(\d+)', message.text)
+                search = re.search('(\d+) (\d+)', message.text)
                 if search:
-                    goodies(int(datetime.now().timestamp()) - int(search.group(1)) * 60 * 60)
+                    goodies(int(datetime.now().timestamp()) - int(search.group(1)) * 60 * 60, int(search.group(2)))
                     bot.send_message(message.chat.id, bold('Выполнено успешно ✅'), parse_mode='HTML')
+                else:
+                    bot.send_message(message.chat.id, bold('херня какая-то ❌'), parse_mode='HTML')
             elif message.text == '/update':
                 global main1
                 global channels_post
@@ -491,7 +493,7 @@ def hourly():
             sleep(300)
             now = int(datetime.now().timestamp())
             printer('работаю ' + re.sub('<.*?>', '', logtime(now - 2 * 60 * 60)))
-            goodies(now - 2 * 60 * 60)
+            goodies(now - 2 * 60 * 60, 5)
             sleep(3300)
         except IndexError and Exception:
             executive(hourly, 0)
@@ -504,7 +506,7 @@ def daily():
             now_dict = stamp_dict(now)
             if now_dict['hour'] == '21':
                 printer('работаю ' + re.sub('<.*?>', '', logtime(now - 24 * 60 * 60)))
-                goodies(now - 24 * 60 * 60)
+                goodies(now - 24 * 60 * 60, 10)
                 sleep(3600)
             sleep(300)
         except IndexError and Exception:
@@ -518,7 +520,7 @@ def weekly():
             now_dict = stamp_dict(now)
             if now_dict['weekday'] == 'Wed' and now_dict['hour'] == '18':
                 printer('работаю ' + re.sub('<.*?>', '', logtime(now - 7 * 24 * 60 * 60)))
-                goodies(now - 7 * 24 * 60 * 60)
+                goodies(now - 7 * 24 * 60 * 60, 10)
                 sleep(3600)
             sleep(300)
         except IndexError and Exception:
