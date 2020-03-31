@@ -535,7 +535,7 @@ def telepol():
 if __name__ == '__main__':
     thread_array = defaultdict(dict)
     if sprite.server == 'any':
-        gain = [hourly, daily, weekly()]
+        gain = [hourly, daily, weekly]
     else:
         gain = []
     for i in gain:
