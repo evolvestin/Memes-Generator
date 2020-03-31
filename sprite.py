@@ -1,2 +1,3 @@
-token = '429683355:AAF3GReDyewByK-WRLQ44xpCNKIsYg1G8X0'  # 617835554:AAHTqC39hgIGOSvaGEqrr8wDCGArB5EZwpA
-server = 'my'  # any
+token = '617835554:AAHTqC39hgIGOSvaGEqrr8wDCGArB5EZwpA'
+idMain = -1001173823433
+server = 'any'
