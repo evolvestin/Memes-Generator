@@ -166,7 +166,7 @@ def stamp_dict(stamp):
 
 
 for w in used_links:
-    if ц != '':
+    if w != '':
         week = int(datetime.now().timestamp()) - 7 * 24 * 60 * 60
         if week < int(used_links_time[used_links.index(w)]):
             outer_response = requests.get(w, stream=True)
