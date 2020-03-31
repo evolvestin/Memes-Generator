@@ -203,6 +203,8 @@ def post_media(raw, id_address, likes_keys):
             text = re.sub('https://t.me/joinchat/\S{22}', '', raw['text'])
             caption = re.sub('@.+?\W', '', text)
             caption = re.sub('@.+', '', caption)
+            if id_address != idChannelMain:
+                caption += bold('\nПодписывайся @memebox')
         if search_video:
             extension = '.mp4'
             typer = types.InputMediaVideo
