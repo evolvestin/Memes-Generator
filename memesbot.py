@@ -166,20 +166,21 @@ def stamp_dict(stamp):
 
 
 for w in used_links:
-    week = int(datetime.now().timestamp()) - 7 * 24 * 60 * 60
-    if week < int(used_links_time[used_links.index(w)]):
-        outer_response = requests.get(w, stream=True)
-        search_videos = re.search('.*\.mp4\?token=.*', w)
-        if search_videos:
-            outer_extension = '.mp4'
-        else:
-            outer_extension = '.jpg'
-        with open('starting' + outer_extension, 'wb') as outer_file:
-            shutil.copyfileobj(outer_response.raw, outer_file)
-        with open('starting' + outer_extension, 'rb') as outer_file:
-            outer_reading = outer_file.read()
-        if outer_reading not in file_db:
-            file_db.append(outer_reading)
+    if i != '':
+        week = int(datetime.now().timestamp()) - 7 * 24 * 60 * 60
+        if week < int(used_links_time[used_links.index(w)]):
+            outer_response = requests.get(w, stream=True)
+            search_videos = re.search('.*\.mp4\?token=.*', w)
+            if search_videos:
+                outer_extension = '.mp4'
+            else:
+                outer_extension = '.jpg'
+            with open('starting' + outer_extension, 'wb') as outer_file:
+                shutil.copyfileobj(outer_response.raw, outer_file)
+            with open('starting' + outer_extension, 'rb') as outer_file:
+                outer_reading = outer_file.read()
+            if outer_reading not in file_db:
+                file_db.append(outer_reading)
 bot = telebot.TeleBot(sprite.token)
 logfile_start = open('log.txt', 'w')
 logfile_start.write('Начало записи лога ' + re.sub('<.*?>', '', logtime(0)))
