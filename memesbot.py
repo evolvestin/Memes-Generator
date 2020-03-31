@@ -488,8 +488,8 @@ def hourly():
         try:
             sleep(300)
             now = int(datetime.now().timestamp())
-            printer('работаю ' + re.sub('<.*?>', '', logtime(now)))
-            goodies(now)
+            printer('работаю ' + re.sub('<.*?>', '', logtime(now - 60 * 60)))
+            goodies(now - 60 * 60)
             sleep(3300)
         except IndexError and Exception:
             executive(hourly, 0)
