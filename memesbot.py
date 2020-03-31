@@ -204,7 +204,7 @@ def post_media(raw, id_address, likes_keys):
             caption = re.sub('@.+?\W', '', text)
             caption = re.sub('@.+', '', caption)
             if id_address != idChannelMain:
-                caption += bold('\nПодписывайся @memebox')
+                caption += '\nПодписывайся @memebox'
         if search_video:
             extension = '.mp4'
             typer = types.InputMediaVideo
