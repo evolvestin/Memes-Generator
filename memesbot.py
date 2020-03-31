@@ -320,8 +320,10 @@ def goodies(stamp):
         post_stag = copy.copy(post_id)
         post_last = copy.copy(post_id)
         post_stag_limiter = post_id * 0.01
-        if post_stag_limiter < 200:
-            post_stag_limiter = 200
+        if post_stag_limiter < 40:
+            post_stag_limiter = 40
+        elif post_stag_limiter > 70:
+            post_stag_limiter = 70
         while imp <= 10:
             post = posting(post_channel + str(post_id), stamp)
             print(post)
@@ -446,7 +448,6 @@ def callbacks(call):
                         post_media(post, idChannelMain, likes(white_like, 0, 0))
 
             elif call.data == 'dislike':
-                print(call)
                 dislike_number += 1
             bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                           reply_markup=likes(like_type, like_number, dislike_number))
@@ -488,8 +489,8 @@ def hourly():
         try:
             sleep(300)
             now = int(datetime.now().timestamp())
-            printer('работаю ' + re.sub('<.*?>', '', logtime(now - 60 * 60)))
-            goodies(now - 60 * 60)
+            printer('работаю ' + re.sub('<.*?>', '', logtime(now - 2 * 60 * 60)))
+            goodies(now - 2 * 60 * 60)
             sleep(3300)
         except IndexError and Exception:
             executive(hourly, 0)
