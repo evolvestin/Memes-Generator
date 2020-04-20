@@ -36,7 +36,7 @@ white_like = '👍🏻 '
 yellow_like = '👍 '
 idChannelMain = sprite.idMain
 idChannelFilter = -1001226018838
-allowed_persons = [idMe, 470292601, 457209276]
+allowed_persons = [idMe, 470292601, 457209276, 574555477]
 # =================================================================
 
 
@@ -197,14 +197,17 @@ def post_media(raw, id_address, likes_keys):
     close_docs = []
     media_pointer = 1
     for i in raw['links']:
-        caption = None
+        caption = '\nПодписывайся @memebox'
         search_video = re.search('.*\.mp4\?token=.*', i)
         if media_pointer == 1 and raw['text'] != 'None':
             text = re.sub('https://t.me/joinchat/\S{22}', '', raw['text'])
             caption = re.sub('@.+?\W', '', text)
             caption = re.sub('@.+', '', caption)
-            if id_address != idChannelMain:
-                caption += '\nПодписывайся @memebox'
+            if id_address == idChannelMain:
+                if caption == '\nПодписывайся @memebox':
+                    caption = None
+                else:
+                    caption = re.sub('\nПодписывайся @memebox', '', caption)
         if search_video:
             extension = '.mp4'
             typer = types.InputMediaVideo
