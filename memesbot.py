@@ -17,7 +17,7 @@ from datetime import datetime
 from unidecode import unidecode
 from collections import defaultdict
 from oauth2client.service_account import ServiceAccountCredentials
-
+print('запуск')
 stamp1 = int(datetime.now().timestamp())
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 creds1 = ServiceAccountCredentials.from_json_keyfile_name('person1.json', scope)
