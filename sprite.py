@@ -1,3 +1,3 @@
-token = '617835554:AAHTqC39hgIGOSvaGEqrr8wDCGArB5EZwpA'
+token = '1127880863:AAGBr0TEhlH-nFfmnfZ0E5JFAKlhYHs2wPA'
 idMain = -1001173823433
 server = 'any'
