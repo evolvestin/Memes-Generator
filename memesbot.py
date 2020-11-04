@@ -1,27 +1,22 @@
+import os
 import re
-import sys
 import time
 import copy
 import shutil
-import sprite
+import objects
 import _thread
 import gspread
-import telebot
 import requests
-import traceback
-import unicodedata
 from time import sleep
 from telebot import types
 from bs4 import BeautifulSoup
 from datetime import datetime
-from unidecode import unidecode
-from collections import defaultdict
-from oauth2client.service_account import ServiceAccountCredentials
-print('запуск')
-stamp1 = int(datetime.now().timestamp())
-scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-creds1 = ServiceAccountCredentials.from_json_keyfile_name('person1.json', scope)
-client1 = gspread.authorize(creds1)
+from objects import bold, time_now
+from objects import thread_exec as executive
+
+stamp1 = time_now()
+objects.environmental_files()
+client1 = gspread.service_account('person1.json')
 used1 = client1.open('memes').worksheet('used-links')
 main1 = client1.open('memes').worksheet('main')
 used_links_time = used1.col_values(2)
@@ -34,119 +29,10 @@ dislike = '👎🏿 '
 idMe = 396978030
 white_like = '👍🏻 '
 yellow_like = '👍 '
-idChannelMain = sprite.idMain
+idChannelMain = -1001173823433
 idChannelFilter = -1001226018838
 allowed_persons = [idMe, 470292601, 457209276, 574555477]
 # =================================================================
-
-
-def bold(txt):
-    return '<b>' + txt + '</b>'
-
-
-def code(txt):
-    return '<code>' + txt + '</code>'
-
-
-def italic(txt):
-    return '<i>' + txt + '</i>'
-
-
-def printer(printer_text):
-    thread_name = str(thread_array[_thread.get_ident()]['name'])
-    logfile = open('log.txt', 'a')
-    log_print_text = thread_name + ' [' + str(_thread.get_ident()) + '] ' + printer_text
-    logfile.write('\n' + re.sub('<.*?>', '', logtime(0)) + log_print_text)
-    logfile.close()
-    print(log_print_text)
-
-
-def send_json(raw, name, error):
-    json_text = ''
-    if type(raw) is str:
-        for character in raw:
-            replaced = unidecode(str(character))
-            if replaced != '':
-                json_text += replaced
-            else:
-                try:
-                    json_text += '[' + unicodedata.name(character) + ']'
-                except ValueError:
-                    json_text += '[???]'
-    if len(error) <= 1000:
-        if json_text != '':
-            doc = open(name + '.json', 'w')
-            doc.write(json_text)
-            doc.close()
-            doc = open(name + '.json', 'rb')
-            bot.send_document(idMe, doc, caption=error)
-            doc.close()
-        else:
-            bot.send_message(idMe, error)
-    elif len(error) > 1000 and len(error) <= 4000:
-        bot.send_message(idMe, error)
-    else:
-        separator = 4000
-        splited_sep = len(error) // separator
-        splited_mod = len(error) / separator - len(error) // separator
-        if splited_mod != 0:
-            splited_sep += 1
-        for i in range(0, splited_sep):
-            splited_error = error[i * separator:(i + 1) * separator]
-            if len(splited_error) > 0:
-                bot.send_message(idMe, splited_error)
-
-
-def executive(new, logs):
-    search = re.search('<function (\S+)', str(new))
-    if search:
-        name = search.group(1)
-    else:
-        name = 'None'
-    exc_type, exc_value, exc_traceback = sys.exc_info()
-    error_raw = traceback.format_exception(exc_type, exc_value, exc_traceback)
-    error = 'Вылет ' + name + '\n'
-    for i in error_raw:
-        error += re.sub('<', '&#60;', str(i))
-    send_json(logs, name, error)
-    if logs == 0:
-        sleep(100)
-        thread_id = _thread.start_new_thread(new, ())
-        thread_array[thread_id] = defaultdict(dict)
-        thread_array[thread_id]['name'] = name
-        thread_array[thread_id]['function'] = new
-        bot.send_message(idMe, 'Запущен ' + bold(name), parse_mode='HTML')
-        sleep(30)
-        _thread.exit()
-
-
-def logtime(stamp):
-    if stamp == 0:
-        stamp = int(datetime.now().timestamp())
-    weekday = datetime.utcfromtimestamp(int(stamp + 3 * 60 * 60)).strftime('%a')
-    if weekday == 'Mon':
-        weekday = 'Пн'
-    elif weekday == 'Tue':
-        weekday = 'Вт'
-    elif weekday == 'Wed':
-        weekday = 'Ср'
-    elif weekday == 'Thu':
-        weekday = 'Чт'
-    elif weekday == 'Fri':
-        weekday = 'Пт'
-    elif weekday == 'Sat':
-        weekday = 'Сб'
-    elif weekday == 'Sun':
-        weekday = 'Вс'
-    day = datetime.utcfromtimestamp(int(stamp + 3 * 60 * 60)).strftime('%d')
-    month = datetime.utcfromtimestamp(int(stamp + 3 * 60 * 60)).strftime('%m')
-    year = datetime.utcfromtimestamp(int(stamp + 3 * 60 * 60)).strftime('%Y')
-    hours = datetime.utcfromtimestamp(int(stamp + 3 * 60 * 60)).strftime('%H')
-    minutes = datetime.utcfromtimestamp(int(stamp)).strftime('%M')
-    seconds = datetime.utcfromtimestamp(int(stamp)).strftime('%S')
-    data = code(str(weekday) + ' ' + str(day) + '.' + str(month) + '.' + str(year) +
-                ' ' + str(hours) + ':' + str(minutes) + ':' + str(seconds)) + ' '
-    return data
 
 
 def likes(like, like_col, dislike_col):
@@ -170,7 +56,7 @@ for w in used_links:
         week = int(datetime.now().timestamp()) - 7 * 24 * 60 * 60
         if week < int(used_links_time[used_links.index(w)]):
             outer_response = requests.get(w, stream=True)
-            search_videos = re.search('.*\.mp4\?token=.*', w)
+            search_videos = re.search(r'.*\.mp4\?token=.*', w)
             if search_videos:
                 outer_extension = '.mp4'
             else:
@@ -181,11 +67,9 @@ for w in used_links:
                 outer_reading = outer_file.read()
             if outer_reading not in file_db:
                 file_db.append(outer_reading)
-bot = telebot.TeleBot(sprite.token)
-logfile_start = open('log.txt', 'w')
-logfile_start.write('Начало записи лога ' + re.sub('<.*?>', '', logtime(0)))
-logfile_start.close()
-start_message = bot.send_message(idMe, logtime(stamp1) + '\n' + logtime(0), parse_mode='HTML')
+
+bot = objects.start_main_bot('non-async', os.environ['TOKEN'])
+objects.start_message(os.environ['TOKEN'], stamp1)
 # ====================================================================================
 
 
@@ -198,10 +82,10 @@ def post_media(raw, id_address, likes_keys):
     media_pointer = 1
     for i in raw['links']:
         caption = '\nПодписывайся @memebox'
-        search_video = re.search('.*\.mp4\?token=.*', i)
+        search_video = re.search(r'.*\.mp4\?token=.*', i)
         if media_pointer == 1 and raw['text'] != 'None':
-            text = re.sub('https://t.me/joinchat/\S{22}', '', raw['text'])
-            caption = re.sub('@.+?\W', '', text)
+            text = re.sub(r'https://t.me/joinchat/\S{22}', '', raw['text'])
+            caption = re.sub(r'@.+?\W', '', text)
             caption = re.sub('@.+', '', caption)
             if id_address == idChannelMain:
                 if caption == '\nПодписывайся @memebox':
@@ -228,10 +112,8 @@ def post_media(raw, id_address, likes_keys):
             if i not in used_links:
                 try:
                     used1.insert_row([i, int(datetime.now().timestamp())], 1)
-                except:
-                    creds1 = ServiceAccountCredentials.from_json_keyfile_name('person1.json', scope)
-                    client1 = gspread.authorize(creds1)
-                    used1 = client1.open('memes').worksheet('used-links')
+                except IndexError and Exception:
+                    used1 = gspread.service_account('person1.json').open('memes').worksheet('used-links')
                     used1.insert_row([i, int(datetime.now().timestamp())], 1)
                 used_links_time.insert(0, int(datetime.now().timestamp()))
                 used_links.insert(0, i)
@@ -269,7 +151,7 @@ def posting(link, true_stamp):
         picture = soup.find_all('a', class_='tgme_widget_message_photo_wrap')
         if len(picture) > 0:
             for i in picture:
-                search = re.search('url\(\'(.*?)\'\)', str(i.get('style')))
+                search = re.search(r'url\(\'(.*?)\'\)', str(i.get('style')))
                 if search:
                     if len(picture) == 1:
                         post['type'] = 'photo'
@@ -332,7 +214,6 @@ def goodies(stamp, number):
             post_stag_limiter = 70
         while imp <= 10:
             post = posting(post_channel + str(post_id), stamp)
-            print(post)
             if post['links'] != [] and post['viewers'] != 'None' and post['stamp'] != 'None':
                 if post['stamp'] != -1:
                     channel_db.append(post)
@@ -348,16 +229,13 @@ def goodies(stamp, number):
         if post_stag != post_last:
             try:
                 main1.update_cell(channels.index(i) + 1, 2, post_last)
-            except:
-                creds1 = ServiceAccountCredentials.from_json_keyfile_name('person1.json', scope)
-                client1 = gspread.authorize(creds1)
-                main1 = client1.open('memes').worksheet('main')
+            except IndexError and Exception:
+                main1 = gspread.service_account('person1.json').open('memes').worksheet('main')
                 main1.update_cell(channels.index(i) + 1, 2, post_last)
 
         while post_stamp >= stamp:
             post_stag -= 1
             post_back = posting(post_channel + str(post_stag), stamp)
-            print(post_back)
             if post_back['links'] != [] and post_back['viewers'] != 'None' and post_back['stamp'] != 'None':
                 limiter_point = 0
                 if post_back['stamp'] != 'None':
@@ -368,8 +246,6 @@ def goodies(stamp, number):
                 limiter_point += 1
             if limiter_point > post_stag_limiter:
                 break
-        for g in channel_db:
-            print('channel_db' + str(g))
 
         channel_db.sort(key=lambda arr: arr['viewers'])
 
@@ -388,20 +264,16 @@ def goodies(stamp, number):
                 good_post['median'] = good_post['viewers'] / median
             else:
                 good_post['median'] = 0
-            print('GOODIE ' + str(good_post))
             goodies_raw.append(good_post)
         else:
             empty_channels += '\n' + post_channel
-        print('-------------------------------')
     goodies_raw.sort(key=lambda arr: arr['median'])
     good_posting = list(reversed(goodies_raw))
     if len(good_posting) <= number:
         for i in good_posting:
-            print(i)
             post_media(i, idChannelFilter, likes(white_like, 0, 0))
     else:
         for i in range(0, number):
-            print(good_posting[i])
             post_media(good_posting[i], idChannelFilter, likes(white_like, 0, 0))
     if len(empty_channels) > 0:
         bot.send_message(idMe, bold('Никаких постов от:') + empty_channels, parse_mode='HTML')
@@ -422,14 +294,14 @@ def callbacks(call):
             for i in like_dislike_array:
                 if i['callback_data'] == 'like':
                     search_like = re.search(white_like, i['text'])
-                    search = re.search('(\d+)', i['text'])
+                    search = re.search(r'(\d+)', i['text'])
                     if search:
                         like_number += int(search.group(1))
                     if search_like is None:
                         like_type = yellow_like
                         already_posted = True
                 elif i['callback_data'] == 'dislike':
-                    search = re.search('(\d+)', i['text'])
+                    search = re.search(r'(\d+)', i['text'])
                     if search:
                         dislike_number += int(search.group(1))
             if call.data == 'like':
@@ -459,7 +331,7 @@ def callbacks(call):
                                           reply_markup=likes(like_type, like_number, dislike_number))
             bot.answer_callback_query(call.id, text='')
     except IndexError and Exception:
-        executive(callbacks, str(call))
+        executive(str(call))
 
 
 @bot.message_handler(func=lambda message: message.text)
@@ -470,87 +342,74 @@ def repeat_all_messages(message):
                 post = posting(message.text, int(datetime.now().timestamp()))
                 post_media(post, idChannelFilter, likes(white_like, 0, 0))
             elif message.text.startswith('/mem'):
-                search = re.search('(\d+) (\d+)', message.text)
+                search = re.search(r'(\d+) (\d+)', message.text)
                 if search:
                     goodies(int(datetime.now().timestamp()) - int(search.group(1)) * 60 * 60, int(search.group(2)))
                     bot.send_message(message.chat.id, bold('Выполнено успешно ✅'), parse_mode='HTML')
                 else:
                     bot.send_message(message.chat.id, bold('херня какая-то ❌'), parse_mode='HTML')
             elif message.text == '/update':
-                global main1
-                global channels_post
-                global channels
-                creds1 = ServiceAccountCredentials.from_json_keyfile_name('person1.json', scope)
-                client1 = gspread.authorize(creds1)
-                main1 = client1.open('memes').worksheet('main')
+                global main1, channels, channels_post
+                main1 = gspread.service_account('person1.json').open('memes').worksheet('main')
                 channels_post = main1.col_values(2)
                 channels = main1.col_values(1)
                 bot.send_message(message.chat.id, bold('Обновлено успешно ✅'), parse_mode='HTML')
+            elif message.text.startswith('/log'):
+                bot.send_document(idMe, open('log.txt', 'rt'))
             else:
-                bot.send_message(message.chat.id, bold('ссылка не подошла, пошел нахуй'), parse_mode='HTML')
+                bot.send_message(message.chat.id, bold('ссылка не подошла'), parse_mode='HTML')
     except IndexError and Exception:
-        executive(repeat_all_messages, str(message))
+        executive(str(message))
 
 
 def hourly():
     while True:
         try:
             sleep(300)
-            now = int(datetime.now().timestamp())
-            printer('работаю ' + re.sub('<.*?>', '', logtime(now - 2 * 60 * 60)))
-            goodies(now - 2 * 60 * 60, 5)
+            objects.printer('работаю ' + objects.log_time(time_now() - 2 * 60 * 60))
+            goodies(time_now() - 2 * 60 * 60, 5)
             sleep(3300)
         except IndexError and Exception:
-            executive(hourly, 0)
+            executive()
 
 
 def daily():
     while True:
         try:
-            now = int(datetime.now().timestamp())
-            now_dict = stamp_dict(now)
+            now_dict = stamp_dict(time_now())
             if now_dict['hour'] == '21':
-                printer('работаю ' + re.sub('<.*?>', '', logtime(now - 24 * 60 * 60)))
-                goodies(now - 24 * 60 * 60, 10)
+                objects.printer('работаю ' + objects.log_time(time_now() - 24 * 60 * 60))
+                goodies(time_now() - 24 * 60 * 60, 10)
                 sleep(3600)
             sleep(300)
         except IndexError and Exception:
-            executive(daily, 0)
+            executive()
 
 
 def weekly():
     while True:
         try:
-            now = int(datetime.now().timestamp())
-            now_dict = stamp_dict(now)
+            now_dict = stamp_dict(time_now())
             if now_dict['weekday'] == 'Wed' and now_dict['hour'] == '18':
-                printer('работаю ' + re.sub('<.*?>', '', logtime(now - 7 * 24 * 60 * 60)))
-                goodies(now - 7 * 24 * 60 * 60, 10)
+                objects.printer('работаю ' + objects.log_time(time_now() - 7 * 24 * 60 * 60))
+                goodies(time_now() - 7 * 24 * 60 * 60, 10)
                 sleep(3600)
             sleep(300)
         except IndexError and Exception:
-            executive(daily, 0)
+            executive()
 
 
-def telepol():
+def telegram_polling():
     try:
         bot.polling(none_stop=True, timeout=60)
-    except:
+    except IndexError and Exception:
         bot.stop_polling()
         sleep(1)
-        telepol()
+        telegram_polling()
 
 
 if __name__ == '__main__':
-    thread_array = defaultdict(dict)
-    if sprite.server == 'any':
-        gain = [hourly, daily, weekly]
-    else:
-        gain = []
-    for i in gain:
-        thread_id = _thread.start_new_thread(i, ())
-        thread_start_name = re.findall('<.+?\s(.+?)\s.*>', str(i))
-        thread_array[thread_id] = defaultdict(dict)
-        thread_array[thread_id]['name'] = thread_start_name[0]
-        thread_array[thread_id]['function'] = i
-    telepol()
+    gain = [hourly, daily, weekly]
+    for func in gain:
+        _thread.start_new_thread(func, ())
+    telegram_polling()
