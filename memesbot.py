@@ -12,7 +12,6 @@ from telebot import types
 from bs4 import BeautifulSoup
 from datetime import datetime
 from objects import bold, time_now
-from objects import thread_exec as executive
 
 stamp1 = time_now()
 objects.environmental_files()
@@ -68,9 +67,11 @@ for w in used_links:
             if outer_reading not in file_db:
                 file_db.append(outer_reading)
 
-bot = objects.start_main_bot('non-async', os.environ['TOKEN'])
-objects.start_message(os.environ['TOKEN'], stamp1)
+Auth = objects.AuthCentre(os.environ['TOKEN'])
+bot = Auth.start_main_bot('non-async')
+executive = Auth.thread_exec
 # ====================================================================================
+Auth.start_message(os.environ['TOKEN'], stamp1)
 
 
 def post_media(raw, id_address, likes_keys):
