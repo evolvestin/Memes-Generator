@@ -70,8 +70,8 @@ for w in used_links:
 Auth = objects.AuthCentre(os.environ['TOKEN'])
 bot = Auth.start_main_bot('non-async')
 executive = Auth.thread_exec
+Auth.start_message(stamp1)
 # ====================================================================================
-Auth.start_message(os.environ['TOKEN'], stamp1)
 
 
 def post_media(raw, id_address, likes_keys):
