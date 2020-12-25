@@ -81,24 +81,23 @@ def post_media(raw, id_address, likes_keys):
     caption = None
     close_docs = []
     media_pointer = 1
+    founded_ad = False
     for i in raw['links']:
-        caption = '\nПодписывайся @memebox'
         search_video = re.search(r'.*\.mp4\?token=.*', i)
         if media_pointer == 1 and raw['text'] != 'None':
+            search_ad_1 = re.search(r'https://t.me/.*', raw['text'])
+            search_ad_2 = re.search('@.+', raw['text'])
+            if search_ad_1 or search_ad_2:
+                founded_ad = True
             text = re.sub(r'https://t.me/joinchat/\S{22}', '', raw['text'])
             caption = re.sub(r'@.+?\W', '', text)
             caption = re.sub('@.+', '', caption)
-            if id_address == idChannelMain:
-                if caption == '\nПодписывайся @memebox':
-                    caption = None
-                else:
-                    caption = re.sub('\nПодписывайся @memebox', '', caption)
         if search_video:
             extension = '.mp4'
-            typer = types.InputMediaVideo
+            type_function = types.InputMediaVideo
         else:
             extension = '.jpg'
-            typer = types.InputMediaPhoto
+            type_function = types.InputMediaPhoto
         response = requests.get(i, stream=True)
         with open(str(media_pointer) + extension, 'wb') as out_file:
             shutil.copyfileobj(response.raw, out_file)
@@ -107,7 +106,7 @@ def post_media(raw, id_address, likes_keys):
         doc = open(str(media_pointer) + extension, 'rb')
         close_docs.append(doc)
         if doc_reading not in file_db:
-            media.append(typer(doc, caption=caption))
+            media.append(type_function(doc, caption=caption))
             file_db.append(doc_reading)
             media_pointer += 1
             if i not in used_links:
@@ -121,19 +120,22 @@ def post_media(raw, id_address, likes_keys):
                 sleep(1)
         else:
             doc = None
-    if len(raw['links']) == 1 and raw['type'] == 'gif' and doc is not None:
-        bot.send_document(id_address, doc, caption=caption, reply_markup=likes_keys)
-    elif len(raw['links']) == 1 and raw['type'] == 'video' and doc is not None:
-        bot.send_video(id_address, doc, caption=caption, reply_markup=likes_keys)
-    elif len(raw['links']) == 1 and raw['type'] == 'photo' and doc is not None:
-        bot.send_photo(id_address, doc, caption=caption, reply_markup=likes_keys)
-    else:
-        if len(media) > 0:
-            pin = bot.send_media_group(id_address, media)
-            if len(pin) > 0:
-                if pin[0].chat.username is not None:
-                    bot.send_message(id_address, 'https://t.me/' + pin[0].chat.username + '/' + str(pin[0].message_id),
-                                     disable_web_page_preview=True, reply_markup=likes_keys)
+    if founded_ad is False:
+        if len(raw['links']) == 1 and raw['type'] == 'gif' and doc is not None:
+            bot.send_document(id_address, doc, caption=caption, reply_markup=likes_keys)
+        elif len(raw['links']) == 1 and raw['type'] == 'video' and doc is not None:
+            bot.send_video(id_address, doc, caption=caption, reply_markup=likes_keys)
+        elif len(raw['links']) == 1 and raw['type'] == 'photo' and doc is not None:
+            bot.send_photo(id_address, doc, caption=caption, reply_markup=likes_keys)
+        else:
+            if len(media) > 0:
+                bot.send_media_group(id_address, media)
+                # здесь был постинг кнопок для собранных в группу медиа, отключил, все равно кнопки не работают
+                # if len(pin) > 0:
+                #    if pin[0].chat.username is not None:
+                #        bot.send_message(id_address, 'https://t.me/' +
+                #                         pin[0].chat.username + '/' + str(pin[0].message_id),
+                #                         disable_web_page_preview=True, reply_markup=likes_keys)
     for i in close_docs:
         i.close()
 
@@ -310,7 +312,7 @@ def callbacks(call):
                 if call.from_user.id in allowed_persons and already_posted is None:
                     like_type = yellow_like
                     if call.message.caption:
-                        caption = re.sub('Подписывайся @memebox', '', str(call.message.caption))
+                        caption = call.message.caption
                     else:
                         caption = None
                     if call.message.video:
@@ -322,8 +324,7 @@ def callbacks(call):
                         bot.send_photo(idChannelMain, call.message.photo[len(call.message.photo) - 1].file_id,
                                        caption=caption, parse_mode='HTML')
                     elif call.message.text.startswith('https://t.me/'):
-                        text = re.sub('\nПодписывайся @memebox', '', call.message.text)
-                        post = posting(text, int(datetime.now().timestamp()))
+                        post = posting(call.message.text, int(datetime.now().timestamp()))
                         post_media(post, idChannelMain, likes(white_like, 0, 0))
 
             elif call.data == 'dislike':
