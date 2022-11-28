@@ -3,15 +3,15 @@ import re
 import time
 import copy
 import shutil
-import objects
 import _thread
 import gspread
 import requests
 from time import sleep
 from telebot import types
+import functions as objects
 from bs4 import BeautifulSoup
 from datetime import datetime
-from objects import bold, time_now
+from functions import bold, time_now
 
 stamp1 = time_now()
 objects.environmental_files()
@@ -126,11 +126,11 @@ def post_media(raw, id_address, likes_keys):
             doc = None
     if founded_ad is False:
         if len(raw['links']) == 1 and raw['type'] == 'gif' and doc is not None:
-            bot.send_document(id_address, doc, caption=caption, reply_markup=likes_keys)
+            bot.send_document(id_address, doc, caption=caption)
         elif len(raw['links']) == 1 and raw['type'] == 'video' and doc is not None:
-            bot.send_video(id_address, doc, caption=caption, reply_markup=likes_keys)
+            bot.send_video(id_address, doc, caption=caption)
         elif len(raw['links']) == 1 and raw['type'] == 'photo' and doc is not None:
-            bot.send_photo(id_address, doc, caption=caption, reply_markup=likes_keys)
+            bot.send_photo(id_address, doc, caption=caption)
         else:
             if len(media) > 0:
                 bot.send_media_group(id_address, media)
@@ -139,7 +139,7 @@ def post_media(raw, id_address, likes_keys):
                 #    if pin[0].chat.username is not None:
                 #        bot.send_message(id_address, 'https://t.me/' +
                 #                         pin[0].chat.username + '/' + str(pin[0].message_id),
-                #                         disable_web_page_preview=True, reply_markup=likes_keys)
+                #                         disable_web_page_preview=True)
     for i in close_docs:
         i.close()
 
@@ -333,8 +333,7 @@ def callbacks(call):
 
             elif call.data == 'dislike':
                 dislike_number += 1
-            bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                          reply_markup=likes(like_type, like_number, dislike_number))
+            bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id)
             bot.answer_callback_query(call.id, text='')
     except IndexError and Exception:
         executive(str(call))
@@ -414,8 +413,12 @@ def telegram_polling():
         telegram_polling()
 
 
-if __name__ == '__main__':
+def start():
     gain = [hourly, daily, weekly]
     for func in gain:
         _thread.start_new_thread(func, ())
     telegram_polling()
+
+
+if __name__ == '__main__':
+    start()
